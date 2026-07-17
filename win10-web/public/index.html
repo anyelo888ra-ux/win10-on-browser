@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 10 Pro - Advanced Web OS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Escritorio -->
+    <div class="escritorio">
+        <!-- Icono 1: PC -->
+        <div class="icono" onclick="abrirVentana('mi-ventana')">
+            <div class="icono-img">💻</div>
+            <span>Este Equipo</span>
+        </div>
+
+        <!-- Icono 2: CMD -->
+        <div class="icono" onclick="abrirVentana('ventana-cmd')">
+            <div class="icono-img">💱</div>
+            <span>Símbolo del sistema</span>
+        </div>
+
+        <!-- Icono 3: Navegador Chronioñ -->
+        <div class="icono" onclick="abrirVentana('ventana-chronion')">
+            <div class="icono-img">🌐</div>
+            <span>Chronioñ v0.1</span>
+        </div>
+    </div>
+
+    <!-- Ventana: Este Equipo -->
+    <div class="ventana" id="mi-ventana" style="display: none;">
+        <div class="ventana-header">
+            <span>Este Equipo</span>
+            <button class="btn-cerrar" onclick="cerrarVentana('mi-ventana')">X</button>
+        </div>
+        <div class="ventana-body">
+            <h3>Propiedades del Sistema:</h3>
+            <p id="info-status">Cargando métricas de Node.js...</p>
+        </div>
+    </div>
+
+    <!-- Ventana: CMD Falso -->
+    <div class="ventana ventana-cmd" id="ventana-cmd" style="display: none;">
+        <div class="ventana-header header-cmd">
+            <span>C:\Windows\system32\cmd.exe</span>
+            <button class="btn-cerrar" onclick="cerrarVentana('ventana-cmd')">X</button>
+        </div>
+        <div class="ventana-body body-cmd" id="cuerpo-cmd">
+            <p>Microsoft Windows [Versión 10.0.19045]</p>
+            <p>(c) Microsoft Corporation. Todos los derechos reservados.</p>
+            <br>
+            <div id="historial-cmd"></div>
+            <div class="linea-comando">
+                <span>C:\Users\Admin></span>
+                <input type="text" id="input-cmd" onkeydown="ejecutarComando(event)">
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventana: Navegador Chronioñ -->
+    <div class="ventana ventana-chronion" id="ventana-chronion" style="display: none;">
+        <div class="ventana-header header-chronion">
+            <span>🌐 Chronioñ Web Browser (Demo)</span>
+            <button class="btn-cerrar" onclick="cerrarVentana('ventana-chronion')">X</button>
+        </div>
+        <div class="barra-direcciones">
+            <input type="text" id="url-chronion" placeholder="Introduce una URL (ej: google.com, github.com)...">
+            <button onclick="navegarChronion()">Ir</button>
+        </div>
+        <div class="ventana-body body-chronion" id="pantalla-chronion">
+            <center>
+                <h2>Bienvenido a Chronioñ Browser</h2>
+                <p>Tu navegador web ultra-ligero de Windows 10 CMD.</p>
+                <p style="color: gray; font-size: 12px;">Prueba buscando: google.com o github.com</p>
+            </center>
+        </div>
+    </div>
+
+    <!-- Barra de Tareas -->
+    <footer class="barra-tareas">
+        <button class="btn-inicio">❖</button>
+        <div class="reloj" id="reloj-sistema">00:00</div>
+    </footer>
+
+    <script>
+        function abrirVentana(id) {
+            document.getElementById(id).style.display = 'block';
+            if(id === 'mi-ventana') {
+                fetch('/api/sistema').then(res => res.json()).then(data => {
+                    document.getElementById('info-status').innerHTML = `Usuario: <b>${data.usuario}</b><br>RAM Virtual: <b>${data.ram_virtual}</b><br>Servidor: <b>${data.estado}</b>`;
+                });
+            }
+            if(id === 'ventana-cmd') document.getElementById('input-cmd').focus();
+        }
+
+        function cerrarVentana(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function ejecutarComando(event) {
+            if (event.key === 'Enter') {
+                const input = document.getElementById('input-cmd');
+                const comando = input.value.trim();
+                if (!comando) return;
+
+                const historial = document.getElementById('historial-cmd');
+                historial.innerHTML += `<p>C:\\Users\\Admin>${comando}</p>`;
+
+                fetch(`/api/cmd?cmd=${encodeURIComponent(comando)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        historial.innerHTML += `<p style="white-space: pre-line; color: #aaa;">${data.resultado}</p><br>`;
+                        input.value = '';
+                        document.getElementById('cuerpo-cmd').scrollTop = document.getElementById('cuerpo-cmd').scrollHeight;
+                    });
+            }
+        }
+
+        function navegarChronion() {
+            const url = document.getElementById('url-chronion').value.toLowerCase().trim();
+            const pantalla = document.getElementById('pantalla-chronion');
+            pantalla.innerHTML = `<p>Chronioñ Core: Conectando a ${url}...</p>`;
+
+            setTimeout(() => {
+                if(url === 'google.com') {
+                    pantalla.innerHTML = `<h2>🔍 Google</h2><hr><input type="text" placeholder="Buscar en Chronioñ..."><br><br><button>Buscar</button>`;
+                } else if(url === 'github.com') {
+                    pantalla.innerHTML = `<h2>🐙 GitHub</h2><hr><p>Plataforma de desarrollo.</p><ul><li>anyelo888ra-ux / <b>win10-on-browser</b></li></ul>`;
+                } else {
+                    pantalla.innerHTML = `<h2>⚠️ Error 404</h2><hr><p>Chronioñ no pudo encontrar la dirección: <b>${url}</b></p>`;
+                }
+            }, 1000);
+        }
+
+        setInterval(() => {
+            const ahora = new Date();
+            document.getElementById('reloj-sistema').innerText = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }, 1000);
+    </script>
+</body>
+</html>
