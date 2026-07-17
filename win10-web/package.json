@@ -1,0 +1,22 @@
+{
+  "name": "win10-web-edition",
+  "version": "1.1.0",
+  "description": "Simulador avanzado de Windows 10 Web con Chronioñ Browser y Chat Control",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "windows10",
+    "simulator",
+    "express",
+    "chronion",
+    "chat-control"
+  ],
+  "author": "anyelo888ra-ux",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

@@ -1,0 +1,138 @@
+<!-- ======================================================= -->
+<!-- BLOQUE 1: ESCRITORIO E ICONOS                           -->
+<!-- ======================================================= -->
+<div class="escritorio">
+    <!-- Icono 1: PC -->
+    <div class="icono" onclick="abrirVentana('mi-ventana')">
+        <div class="icono-img">💻</div>
+        <span>Este Equipo</span>
+    </div>
+
+    <!-- Icono 2: CMD -->
+    <div class="icono" onclick="abrirVentana('ventana-cmd')">
+        <div class="icono-img">💱</div>
+        <span>Símbolo del sistema</span>
+    </div>
+
+    <!-- Icono 3: Navegador Chronioñ -->
+    <div class="icono" onclick="abrirVentana('ventana-chronion')">
+        <div class="icono-img">🌐</div>
+        <span>Chronioñ v0.1</span>
+    </div>
+
+    <!-- Icono 4: Chat Control -->
+    <div class="icono" onclick="abrirVentana('ventana-chat')">
+        <div class="icono-img">💬</div>
+        <span>Chat Control</span>
+    </div>
+</div>
+<!-- ======================================================= -->
+<!-- BLOQUE 2: VENTANA DE CHAT CONTROL                       -->
+<!-- ======================================================= -->
+<div class="ventana ventana-chat" id="ventana-chat" style="display: none;">
+    <div class="ventana-header header-chat">
+        <span>💬 Chat Control v1.0 - Stream Command Reader</span>
+        <button class="btn-cerrar" onclick="cerrarVentana('ventana-chat')">X</button>
+    </div>
+    <div class="barra-stream">
+        <input type="text" id="video-id-input" placeholder="Introduce el Video ID del streaming...">
+        <button onclick="conectarChatStream()">Conectar</button>
+    </div>
+    <div class="ventana-body body-chat">
+        <div id="status-stream" style="color: gray; margin-bottom: 10px;">Estado: Desconectado</div>
+        <div class="consola-chat" id="consola-chat-logs">
+            <p style="color: #666;">Introduce un ID arriba para empezar a escanear el chat en vivo en busca de comandos...</p>
+        </div>
+    </div>
+</div>
+<!-- ======================================================= -->
+<!-- BLOQUE 3: SCRIPTS Y LÓGICA DEL SISTEMA                  -->
+<!-- ======================================================= -->
+<script>
+    function abrirVentana(id) {
+        document.getElementById(id).style.display = 'block';
+        if(id === 'mi-ventana') {
+            fetch('/api/sistema').then(res => res.json()).then(data => {
+                document.getElementById('info-status').innerHTML = `Usuario: <b>${data.usuario}</b><br>RAM Virtual: <b>${data.ram_virtual}</b><br>Servidor: <b>${data.estado}</b>`;
+            });
+        }
+        if(id === 'ventana-cmd') document.getElementById('input-cmd').focus();
+    }
+
+    function cerrarVentana(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    function ejecutarComando(event) {
+        if (event.key === 'Enter') {
+            const input = document.getElementById('input-cmd');
+            const comando = input.value.trim();
+            if (!comando) return;
+
+            const historial = document.getElementById('historial-cmd');
+            historial.innerHTML += `<p>C:\\Users\\Admin>${comando}</p>`;
+
+            fetch(`/api/cmd?cmd=${encodeURIComponent(comando)}`)
+                .then(res => res.json())
+                .then(data => {
+                    historial.innerHTML += `<p style="white-space: pre-line; color: #aaa;">${data.resultado}</p><br>`;
+                    input.value = '';
+                    document.getElementById('cuerpo-cmd').scrollTop = document.getElementById('cuerpo-cmd').scrollHeight;
+                });
+        }
+    }
+
+    function navegarChronion() {
+        const url = document.getElementById('url-chronion').value.toLowerCase().trim();
+        const pantalla = document.getElementById('pantalla-chronion');
+        pantalla.innerHTML = `<p>Chronioñ Core: Conectando a ${url}...</p>`;
+
+        setTimeout(() => {
+            if(url === 'google.com') {
+                pantalla.innerHTML = `<h2>🔍 Google</h2><hr><input type="text" placeholder="Buscar en Chronioñ..."><br><br><button>Buscar</button>`;
+            } else if(url === 'github.com') {
+                pantalla.innerHTML = `<h2>🐙 GitHub</h2><hr><p>Plataforma de desarrollo.</p><ul><li>anyelo888ra-ux / <b>win10-on-browser</b></li></ul>`;
+            } else {
+                pantalla.innerHTML = `<h2>⚠️ Error 404</h2><hr><p>Chronioñ no pudo encontrar la dirección: <b>${url}</b></p>`;
+            }
+        }, 1000);
+    }
+
+    // --- FUNCIÓN DE CHAT CONTROL DETECTADA Y CORREGIDA ---
+    function conectarChatStream() {
+        const id = document.getElementById('video-id-input').value.trim();
+        const status = document.getElementById('status-stream');
+        const consola = document.getElementById('consola-chat-logs');
+
+        if(!id) return alert("Por favor, introduce un ID válido");
+
+        status.innerHTML = `🟢 <b>Conectando al chat del streaming...</b>`;
+        consola.innerHTML = `<p>Escaneando flujo de datos para el ID: ${id}...</p>`;
+
+        setTimeout(() => {
+            fetch(`/api/chat-control?id=${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    status.innerHTML = `🟢 <b>${data.estado}</b> (Leyendo moderadores)`;
+                    consola.innerHTML = ""; 
+
+                    data.logs.forEach(log => {
+                        let item = document.createElement('p');
+                        item.style.marginBottom = "8px";
+                        
+                        if(log.comando) {
+                            item.innerHTML = `<span style="color: #00ff00;">[COMANDO DETECTADO]</span> <b>${log.usuario}</b> ejecutó <i>${log.mensaje}</i>:<br><span style="color: #aaa; font-family: monospace; display:block; padding-left: 10px;">${log.ejecucion}</span>`;
+                        } else {
+                            item.innerHTML = `<span style="color: #888;">[Chat]</span> <b>${log.usuario}</b>: ${log.mensaje}`;
+                        }
+                        consola.appendChild(item);
+                    });
+                });
+        }, 1500);
+    }
+
+    setInterval(() => {
+        const ahora = new Date();
+        document.getElementById('reloj-sistema').innerText = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }, 1000);
+</script>
